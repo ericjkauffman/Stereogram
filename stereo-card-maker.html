@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Stereo Cards</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Stereo Cards">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='34' fill='%232a2118'/%3E%3Crect x='24' y='58' width='56' height='64' rx='8' fill='%23f2ead8'/%3E%3Crect x='100' y='58' width='56' height='64' rx='8' fill='%23f2ead8'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Courier+Prime&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f2ead8;
+    --card:#efe3c8;
+    --ink:#2a2118;
+    --accent:#8a4a2b;
+    --line:#b8a179;
+    --muted:#7a6c52;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Courier Prime', monospace;
+    padding:20px 16px 60px;
+  }
+  h1{
+    font-family:'Playfair Display', Georgia, serif;
+    font-size:1.5rem;
+    margin:0 0 2px;
+    letter-spacing:0.5px;
+  }
+  .sub{
+    color:var(--muted);
+    font-size:0.85rem;
+    margin:0 0 20px;
+    line-height:1.4;
+  }
+  .section-label{
+    font-family:'Playfair Display', Georgia, serif;
+    font-weight:600;
+    font-size:0.95rem;
+    margin:22px 0 8px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .section-label .num{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:20px;height:20px;
+    border-radius:50%;
+    background:var(--accent);
+    color:var(--paper);
+    font-size:0.7rem;
+    font-family:'Courier Prime',monospace;
+  }
+  .set-block{
+    border:1px solid var(--line);
+    border-radius:5px;
+    padding:14px;
+    margin-bottom:16px;
+    background:rgba(255,255,255,0.25);
+  }
+  .set-header{
+    font-family:'Playfair Display', Georgia, serif;
+    font-weight:600;
+    font-size:0.95rem;
+    margin-bottom:10px;
+  }
+  .uploads{
+    display:flex;
+    gap:10px;
+  }
+  .upload-slot{
+    flex:1;
+    text-align:center;
+  }
+  .upload-slot label.btn{
+    display:block;
+    background:var(--accent);
+    color:var(--paper);
+    padding:10px 8px;
+    border-radius:3px;
+    font-size:0.8rem;
+    cursor:pointer;
+    letter-spacing:0.3px;
+  }
+  .upload-slot span.filename{
+    display:block;
+    font-size:0.65rem;
+    color:var(--muted);
+    margin-top:4px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  input[type=file]{display:none;}
+
+  .card-wrap{
+    margin:16px auto 0;
+    max-width:560px;
+  }
+  .card{
+    position:relative;
+    width:100%;
+    aspect-ratio:2/1;
+    background:var(--card);
+    border:2px dashed var(--accent);
+    border-radius:2px;
+  }
+  .photo-box{
+    position:absolute;
+    overflow:hidden;
+    background:repeating-linear-gradient(45deg,#ded0ac,#ded0ac 6px,#e8dcbb 6px,#e8dcbb 12px);
+    border-radius:11% 11% 0 0;
+    box-shadow:inset 0 0 0 1px rgba(42,33,24,0.25);
+    touch-action:none;
+    cursor:grab;
+  }
+  .photo-box.dragging{cursor:grabbing;}
+  .photo-box img{
+    position:absolute;
+    left:0;top:0;
+    user-select:none;
+    -webkit-user-drag:none;
+    pointer-events:none;
+  }
+  .photo-box .hint{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:0.7rem;
+    color:var(--muted);
+    text-align:center;
+    padding:10px;
+  }
+  .caption-preview{
+    position:absolute;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    color:var(--ink);
+    font-family:Georgia, serif;
+    line-height:1.25;
+    pointer-events:none;
+    white-space:nowrap;
+  }
+
+  .zoom-row{
+    display:flex;
+    gap:10px;
+    margin-top:10px;
+  }
+  .zoom-col{flex:1;}
+  .zoom-col label{
+    font-size:0.65rem;
+    color:var(--muted);
+    display:block;
+    margin-bottom:2px;
+  }
+  input[type=range]{
+    width:100%;
+    accent-color:var(--accent);
+  }
+
+  .cap-label{
+    font-size:0.7rem;
+    color:var(--muted);
+    display:block;
+    margin-bottom:3px;
+  }
+  .cap-input{
+    width:100%;
+    font-family:'Courier Prime',monospace;
+    font-size:0.8rem;
+    padding:7px;
+    border:1px solid var(--line);
+    border-radius:3px;
+    background:#fff;
+  }
+
+  .set-note{
+    font-size:0.68rem;
+    color:var(--muted);
+    margin-top:10px;
+    font-style:italic;
+  }
+
+  .options{
+    margin-top:22px;
+    border:1px solid var(--line);
+    border-radius:3px;
+    padding:12px 14px;
+    background:rgba(255,255,255,0.25);
+  }
+  .radio-row{
+    display:flex;
+    align-items:flex-start;
+    gap:8px;
+    margin:8px 0;
+    font-size:0.8rem;
+    line-height:1.35;
+  }
+  .radio-row input{margin-top:3px;}
+  .radio-row .desc{color:var(--muted); font-size:0.72rem;}
+
+  .actions{
+    margin-top:18px;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  button.primary{
+    flex:1;
+    min-width:160px;
+    background:var(--ink);
+    color:var(--paper);
+    border:none;
+    padding:13px 10px;
+    border-radius:3px;
+    font-family:'Courier Prime',monospace;
+    font-size:0.85rem;
+    letter-spacing:0.5px;
+    cursor:pointer;
+  }
+  button:disabled{opacity:0.35; cursor:not-allowed;}
+  .status{
+    font-size:0.72rem;
+    color:var(--muted);
+    margin-top:10px;
+    min-height:1em;
+  }
+  .spec{
+    margin-top:26px;
+    font-size:0.68rem;
+    color:var(--muted);
+    border-top:1px solid var(--line);
+    padding-top:10px;
+    line-height:1.6;
+  }
+</style>
+</head>
+<body>
+
+  <h1>Stereograph Card Maker</h1>
+  <p class="sub">Build Holmes-style stereo cards from your phone photos. Fill in up to three sets below — only sets with at least one photo get printed, and they're packed onto a single sheet to save paper.</p>
+
+  <div class="section-label"><span class="num">1</span> Add your photo sets</div>
+  <div id="setsContainer"></div>
+
+  <div class="section-label"><span class="num">2</span> Choose print layout</div>
+  <div class="options">
+    <div class="radio-row">
+      <input type="radio" name="layout" id="layoutLetter" value="letter" checked>
+      <label for="layoutLetter">
+        <strong>Letter sheet, 8.5×11 in, with cut outlines</strong>
+        <div class="desc">All populated sets (1–3) are stacked on one sheet, each with a dashed cut line at 3.5×7 in. Print at 100% / "actual size."</div>
+      </label>
+    </div>
+    <div class="radio-row">
+      <input type="radio" name="layout" id="layoutExact" value="exact">
+      <label for="layoutExact">
+        <strong>Exact card size, 3.5×7 in page</strong>
+        <div class="desc">Page itself is the finished card size, using only the first populated set — for printing directly onto 3.5×7 in cardstock.</div>
+      </label>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="primary" id="generateBtn" disabled>Generate sheet to save</button>
+  </div>
+  <div class="status" id="status"></div>
+  <div id="fallback" style="display:none; margin-top:14px; border:1px solid var(--line); border-radius:3px; padding:12px; background:rgba(255,255,255,0.35); text-align:center;">
+    <div style="font-size:0.72rem; color:var(--muted); margin-bottom:10px;">
+      This chat window can't trigger a normal file download, so save it the same way you'd save any photo: press and hold the image below, then choose <strong>Save Image</strong> (iPhone) or <strong>Download image</strong> (Android). It's already sized at 300&nbsp;dpi for printing.
+    </div>
+    <img id="resultPreview" style="max-width:100%; border:1px solid var(--line); border-radius:2px;">
+  </div>
+
+  <div class="spec">
+    Card spec: 3.5 × 7 in mount. 0.25 in side margin, 3.00 × 3.00 in photo, 0.50 in center gap, 3.00 × 3.00 in photo, 0.25 in side margin. 0.25 in top/bottom margin, top corners rounded, bottom flat. Caption sits in the bottom margin under the right photo, 3/32 in tall type, two lines. Letter-sheet exports pack every populated set (1–3) onto one 8.5×11 in page. Export is rendered at 300 dpi.
+  </div>
+
+<script>
+const CARD_W = 7, CARD_H = 3.5;
+const PHOTO_W = 3.00, PHOTO_H = 3.00;
+const TOP_MARGIN = (CARD_H - PHOTO_H) / 2;             // 0.25 in
+const SIDE_MARGIN = 0.25;
+const GAP = CARD_W - 2 * SIDE_MARGIN - 2 * PHOTO_W;    // 0.50 in
+const CORNER_R = 0.35;
+const CAPTION_FONT_IN = (1/16) * 1.5;                  // 3/32 in
+const DPI = 300;
+const PAGE_W = 8.5, PAGE_H = 11;
+const NUM_SETS = 3;
+
+function el(id){ return document.getElementById(id); }
+
+function buildSetMarkup(i){
+  return `
+  <div class="set-block">
+    <div class="set-header">Set ${i}</div>
+    <div class="uploads">
+      <div class="upload-slot">
+        <label class="btn" for="fileLeft${i}">Left-eye photo</label>
+        <input type="file" id="fileLeft${i}" accept="image/*">
+        <span class="filename" id="nameLeft${i}"></span>
+      </div>
+      <div class="upload-slot">
+        <label class="btn" for="fileRight${i}">Right-eye photo</label>
+        <input type="file" id="fileRight${i}" accept="image/*">
+        <span class="filename" id="nameRight${i}"></span>
+      </div>
+    </div>
+    <div class="card-wrap">
+      <div class="card" id="card${i}">
+        <div class="photo-box" id="boxLeft${i}"><div class="hint">Tap "Left-eye photo" above</div></div>
+        <div class="photo-box" id="boxRight${i}"><div class="hint">Tap "Right-eye photo" above</div></div>
+        <div class="caption-preview" id="captionPreview${i}"></div>
+      </div>
+    </div>
+    <div class="zoom-row">
+      <div class="zoom-col"><label>Left zoom</label><input type="range" id="zoomLeft${i}" min="1" max="3" step="0.01" value="1" disabled></div>
+      <div class="zoom-col"><label>Right zoom</label><input type="range" id="zoomRight${i}" min="1" max="3" step="0.01" value="1" disabled></div>
+    </div>
+    <div class="uploads">
+      <div class="upload-slot" style="text-align:left;">
+        <label class="cap-label">Line 1</label>
+        <input type="text" id="capLine1_${i}" class="cap-input" placeholder="Caption line 1">
+      </div>
+      <div class="upload-slot" style="text-align:left;">
+        <label class="cap-label">Line 2</label>
+        <input type="text" id="capLine2_${i}" class="cap-input" placeholder="Caption line 2">
+      </div>
+    </div>
+    <div class="set-note">Leave both photos empty to skip this set when printing.</div>
+  </div>`;
+}
+
+el('setsContainer').innerHTML = Array.from({length: NUM_SETS}, (_, k) => buildSetMarkup(k + 1)).join('');
+
+function freshPhotoState(){
+  return { img:null, scale:1, tx:0, ty:0, baseW:0, baseH:0, el:null };
+}
+
+const sets = Array.from({length: NUM_SETS}, (_, k) => {
+  const i = k + 1;
+  return {
+    index: i,
+    left: freshPhotoState(),
+    right: freshPhotoState(),
+    boxes: { left: el('boxLeft' + i), right: el('boxRight' + i) },
+    zooms: { left: el('zoomLeft' + i), right: el('zoomRight' + i) },
+    caps: { line1: el('capLine1_' + i), line2: el('capLine2_' + i) },
+    captionPreview: el('captionPreview' + i),
+    cardEl: el('card' + i)
+  };
+});
+
+function pct(inches, total){ return (inches / total * 100) + '%'; }
+
+function layoutBoxes(set){
+  const wPct = pct(PHOTO_W, CARD_W);
+  const hPct = pct(PHOTO_H, CARD_H);
+  const topPct = pct(TOP_MARGIN, CARD_H);
+
+  set.boxes.left.style.left = pct(SIDE_MARGIN, CARD_W);
+  set.boxes.left.style.top = topPct;
+  set.boxes.left.style.width = wPct;
+  set.boxes.left.style.height = hPct;
+
+  set.boxes.right.style.left = pct(SIDE_MARGIN + PHOTO_W + GAP, CARD_W);
+  set.boxes.right.style.top = topPct;
+  set.boxes.right.style.width = wPct;
+  set.boxes.right.style.height = hPct;
+
+  set.captionPreview.style.left = pct(SIDE_MARGIN + PHOTO_W + GAP, CARD_W);
+  set.captionPreview.style.width = wPct;
+  set.captionPreview.style.top = pct(TOP_MARGIN + PHOTO_H, CARD_H);
+  set.captionPreview.style.height = pct(CARD_H - TOP_MARGIN - PHOTO_H, CARD_H);
+
+  updateCaptionPreview(set);
+}
+
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function updateCaptionPreview(set){
+  const rect = set.cardEl.getBoundingClientRect();
+  const inchToPx = rect.width / CARD_W;
+  const fontPx = CAPTION_FONT_IN * inchToPx;
+  set.captionPreview.style.fontSize = fontPx + 'px';
+  const l1 = set.caps.line1.value, l2 = set.caps.line2.value;
+  set.captionPreview.innerHTML = (l1 ? '<div>' + escapeHtml(l1) + '</div>' : '')
+    + (l2 ? '<div>' + escapeHtml(l2) + '</div>' : '');
+}
+
+function loadFile(set, side, file){
+  if(!file) return;
+  const nameEl = el((side === 'left' ? 'nameLeft' : 'nameRight') + set.index);
+  if(nameEl) nameEl.textContent = file.name;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => setupPhoto(set, side, img);
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function setupPhoto(set, side, img){
+  const s = set[side];
+  s.img = img;
+  s.scale = 1;
+
+  const box = set.boxes[side];
+  box.innerHTML = '';
+  const imgEl = document.createElement('img');
+  box.appendChild(imgEl);
+  s.el = imgEl;
+
+  const rect = box.getBoundingClientRect();
+  const scaleCover = Math.max(rect.width / img.naturalWidth, rect.height / img.naturalHeight);
+  s.baseW = img.naturalWidth * scaleCover;
+  s.baseH = img.naturalHeight * scaleCover;
+
+  s.tx = (rect.width - s.baseW) / 2;
+  s.ty = (rect.height - s.baseH) / 2;
+
+  imgEl.src = img.src;
+  renderPhoto(set, side);
+  attachDrag(set, side);
+
+  set.zooms[side].disabled = false;
+  set.zooms[side].value = 1;
+
+  maybeEnableExport();
+}
+
+function clamp(set, side){
+  const s = set[side];
+  const rect = set.boxes[side].getBoundingClientRect();
+  const dW = s.baseW * s.scale, dH = s.baseH * s.scale;
+  const minTx = Math.min(0, rect.width - dW), minTy = Math.min(0, rect.height - dH);
+  s.tx = Math.max(minTx, Math.min(0, s.tx));
+  s.ty = Math.max(minTy, Math.min(0, s.ty));
+}
+
+function renderPhoto(set, side){
+  const s = set[side];
+  if(!s.img) return;
+  clamp(set, side);
+  s.el.style.width = (s.baseW * s.scale) + 'px';
+  s.el.style.height = (s.baseH * s.scale) + 'px';
+  s.el.style.left = s.tx + 'px';
+  s.el.style.top = s.ty + 'px';
+}
+
+function attachDrag(set, side){
+  const box = set.boxes[side];
+  let dragging = false, startX, startY, startTx, startTy;
+
+  box.addEventListener('pointerdown', e => {
+    if(!set[side].img) return;
+    dragging = true;
+    box.classList.add('dragging');
+    box.setPointerCapture(e.pointerId);
+    startX = e.clientX; startY = e.clientY;
+    startTx = set[side].tx; startTy = set[side].ty;
+  });
+  box.addEventListener('pointermove', e => {
+    if(!dragging) return;
+    const s = set[side];
+    s.tx = startTx + (e.clientX - startX);
+    s.ty = startTy + (e.clientY - startY);
+    renderPhoto(set, side);
+  });
+  function end(){
+    dragging = false;
+    box.classList.remove('dragging');
+  }
+  box.addEventListener('pointerup', end);
+  box.addEventListener('pointercancel', end);
+}
+
+function isPopulated(set){
+  return !!(set.left.img || set.right.img);
+}
+
+function maybeEnableExport(){
+  el('generateBtn').disabled = !sets.some(isPopulated);
+}
+
+sets.forEach(set => {
+  const i = set.index;
+  el('fileLeft' + i).addEventListener('change', e => loadFile(set, 'left', e.target.files[0]));
+  el('fileRight' + i).addEventListener('change', e => loadFile(set, 'right', e.target.files[0]));
+  set.zooms.left.addEventListener('input', e => { set.left.scale = parseFloat(e.target.value); renderPhoto(set, 'left'); });
+  set.zooms.right.addEventListener('input', e => { set.right.scale = parseFloat(e.target.value); renderPhoto(set, 'right'); });
+  set.caps.line1.addEventListener('input', () => updateCaptionPreview(set));
+  set.caps.line2.addEventListener('input', () => updateCaptionPreview(set));
+  layoutBoxes(set);
+});
+window.addEventListener('resize', () => sets.forEach(updateCaptionPreview));
+
+// ---------- Export ----------
+
+function roundedTopRectPath(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y, x + w, y + r, r);
+  ctx.lineTo(x + w, y + h);
+  ctx.lineTo(x, y + h);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
+}
+
+function drawPhoto(ctx, set, side, px, py, pw, ph, r){
+  const s = set[side];
+  if(!s.img){
+    ctx.save();
+    roundedTopRectPath(ctx, px, py, pw, ph, r);
+    ctx.strokeStyle = 'rgba(42,33,24,0.25)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+    return;
+  }
+  const box = set.boxes[side];
+  const boxSize = box.getBoundingClientRect().width;
+  const ratio = pw / boxSize;
+
+  ctx.save();
+  roundedTopRectPath(ctx, px, py, pw, ph, r);
+  ctx.clip();
+  const dw = s.baseW * s.scale * ratio;
+  const dh = s.baseH * s.scale * ratio;
+  const dx = px + s.tx * ratio;
+  const dy = py + s.ty * ratio;
+  ctx.drawImage(s.img, dx, dy, dw, dh);
+  ctx.restore();
+
+  ctx.save();
+  roundedTopRectPath(ctx, px, py, pw, ph, r);
+  ctx.strokeStyle = 'rgba(42,33,24,0.35)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawCaption(ctx, set, x, y, w, bandH){
+  const l1 = set.caps.line1.value, l2 = set.caps.line2.value;
+  if(!l1 && !l2) return;
+
+  const fontPx = CAPTION_FONT_IN * DPI;
+  const lineHeight = fontPx * 1.3;
+  const lines = [l1, l2].filter(Boolean);
+  const totalH = lineHeight * lines.length;
+
+  ctx.save();
+  ctx.fillStyle = '#2a2118';
+  ctx.font = fontPx + 'px Georgia, serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+
+  let cursorY = y + (bandH - totalH) / 2 + fontPx * 0.85;
+  const cx = x + w / 2;
+  for(const line of lines){
+    ctx.fillText(line, cx, cursorY);
+    cursorY += lineHeight;
+  }
+  ctx.restore();
+}
+
+function drawCard(ctx, set, offX, offY, drawCutLine){
+  const cardWpx = CARD_W * DPI, cardHpx = CARD_H * DPI;
+
+  ctx.fillStyle = '#f2ead8';
+  ctx.fillRect(offX, offY, cardWpx, cardHpx);
+
+  if(drawCutLine){
+    ctx.save();
+    ctx.strokeStyle = '#8a4a2b';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([10, 8]);
+    ctx.strokeRect(offX, offY, cardWpx, cardHpx);
+    ctx.restore();
+  }
+
+  const photoW = PHOTO_W * DPI, photoH = PHOTO_H * DPI;
+  const topM = TOP_MARGIN * DPI;
+  const r = CORNER_R * DPI;
+
+  const leftX = offX + SIDE_MARGIN * DPI;
+  const rightX = offX + (SIDE_MARGIN + PHOTO_W + GAP) * DPI;
+  const photoY = offY + topM;
+
+  drawPhoto(ctx, set, 'left', leftX, photoY, photoW, photoH, r);
+  drawPhoto(ctx, set, 'right', rightX, photoY, photoW, photoH, r);
+
+  drawCaption(ctx, set, rightX, photoY + photoH, photoW, offY + CARD_H * DPI - (photoY + photoH));
+}
+
+function buildCanvasExact(populated){
+  const set = populated[0];
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(CARD_W * DPI);
+  canvas.height = Math.round(CARD_H * DPI);
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  drawCard(ctx, set, 0, 0, false);
+  return canvas;
+}
+
+function buildCanvasLetter(populated){
+  const n = populated.length;
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(PAGE_W * DPI);
+  canvas.height = Math.round(PAGE_H * DPI);
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const marginIn = (PAGE_H - n * CARD_H) / (n + 1);
+  const offXIn = (PAGE_W - CARD_W) / 2;
+
+  populated.forEach((set, k) => {
+    const offX = offXIn * DPI;
+    const offY = (marginIn + k * (CARD_H + marginIn)) * DPI;
+    drawCard(ctx, set, offX, offY, true);
+  });
+
+  return canvas;
+}
+
+el('generateBtn').addEventListener('click', () => {
+  const mode = document.querySelector('input[name=layout]:checked').value;
+  const populated = sets.filter(isPopulated);
+  if(populated.length === 0){
+    el('status').textContent = 'Add at least one photo first.';
+    return;
+  }
+  el('status').textContent = 'Rendering…';
+  setTimeout(() => {
+    try {
+      const canvas = mode === 'letter' ? buildCanvasLetter(populated) : buildCanvasExact(populated);
+      const dataUrl = canvas.toDataURL('image/png');
+
+      el('resultPreview').src = dataUrl;
+      el('fallback').style.display = 'block';
+      el('fallback').scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      if(mode === 'letter'){
+        el('status').textContent = `Ready below — ${populated.length} card${populated.length > 1 ? 's' : ''} on one sheet. Save the image, print at 100% / "actual size," and cut along the dashed lines.`;
+      } else {
+        el('status').textContent = 'Ready below — Set ' + populated[0].index + ' at exact 3.5×7 in size. Save and print at 100% / "actual size" onto cardstock.';
+      }
+    } catch (err) {
+      el('status').textContent = 'Error: ' + (err && err.message ? err.message : String(err));
+      console.error(err);
+    }
+  }, 30);
+});
+
+window.addEventListener('error', (e) => {
+  el('status').textContent = 'Error: ' + e.message;
+});
+</script>
+</body>
+</html>
